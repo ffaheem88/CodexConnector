@@ -187,4 +187,4 @@ The script will automatically find all git repos in immediate subdirectories, ch
 
 ## License
 
-MIT
+Apache License 2.0 - See [LICENSE](LICENSE) for details.
