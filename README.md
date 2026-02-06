@@ -12,28 +12,31 @@ When Claude Code finishes writing code, it can run `codex-review` to have Codex 
 - **Multiple review modes** - Review uncommitted changes, staged changes, branch diffs, or specific commits.
 - **Custom prompts** - Focus reviews on specific areas (e.g., security, error handling).
 - **Automatic skip** - Repos with no changes are skipped automatically.
+- **Cross-platform** - Works on Linux, macOS (Bash), and Windows (PowerShell).
 
 ## Prerequisites
 
 - [Codex CLI](https://github.com/openai/codex) installed and configured
 - Git
-- Bash
+- Bash (Linux/macOS) or PowerShell 5.1+ (Windows)
 
 ## Installation
 
-### 1. Clone the repo
+### Linux / macOS
+
+#### 1. Clone the repo
 
 ```bash
 git clone https://github.com/ffaheem88/CodexConnector.git
 ```
 
-### 2. Make the script executable
+#### 2. Make the script executable
 
 ```bash
 chmod +x CodexConnector/codex-review.sh
 ```
 
-### 3. Add to PATH
+#### 3. Add to PATH
 
 Add a symlink so `codex-review` is available globally:
 
@@ -45,7 +48,6 @@ Or add the directory to your PATH in `~/.bashrc` or `~/.zshrc`:
 
 ```bash
 export PATH="$PATH:/path/to/CodexConnector"
-# Then create an alias without the .sh extension:
 alias codex-review='/path/to/CodexConnector/codex-review.sh'
 ```
 
@@ -55,11 +57,46 @@ Reload your shell:
 source ~/.bashrc  # or source ~/.zshrc
 ```
 
-### 4. Verify installation
+#### 4. Verify
 
 ```bash
 codex-review --help
 ```
+
+### Windows
+
+#### 1. Clone the repo
+
+```powershell
+git clone https://github.com/ffaheem88/CodexConnector.git
+```
+
+#### 2. Add to PATH
+
+Add the `CodexConnector` folder to your system PATH so the `codex-review.cmd` wrapper is available everywhere:
+
+**Option A - via PowerShell (current user):**
+
+```powershell
+$codexPath = (Resolve-Path .\CodexConnector).Path
+[Environment]::SetEnvironmentVariable("Path", "$env:Path;$codexPath", "User")
+```
+
+**Option B - via System Settings:**
+
+1. Open **Start > Environment Variables**
+2. Under **User variables**, edit `Path`
+3. Add the full path to the `CodexConnector` folder (e.g., `C:\Users\you\CodexConnector`)
+
+Open a new terminal after updating PATH.
+
+#### 3. Verify
+
+```powershell
+codex-review -Help
+```
+
+> **Note:** The `codex-review.cmd` wrapper calls the PowerShell script automatically. You can also call the script directly: `powershell -File codex-review.ps1`
 
 ## Usage
 
