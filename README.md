@@ -1,17 +1,19 @@
 # CodexConnector
 
-A bridge between **Claude Code** and **OpenAI Codex CLI** that lets Claude automatically get a second opinion on code changes by sending them to Codex for review.
+A bridge between **Claude Code** and **OpenAI Codex CLI** that lets Claude automatically get a second opinion on code changes and implementation plans by sending them to Codex for review.
 
 ## Why?
 
-When Claude Code finishes writing code, it can run `codex-review` to have Codex independently check for bugs, edge cases, and improvements. Two AI reviewers catch more issues than one.
+When Claude Code finishes writing code, it can run `codex-review` to have Codex independently check for bugs, edge cases, and improvements. Before starting implementation, it can run `codex-review -a plan` to get Codex's feedback on the approach. Two AI reviewers catch more issues than one.
 
 ## Features
 
+- **Two actions** - `review` for code changes, `plan` for reviewing implementation plans and bug fix strategies.
 - **Multi-repo support** - Automatically discovers and reviews all git repos in a directory. Point it at a parent folder containing multiple projects and it reviews changes across all of them.
 - **Multiple review modes** - Review uncommitted changes, staged changes, branch diffs, or specific commits.
+- **Plan input flexibility** - Provide plans as a file (`-f plan.md`), inline text, or both.
 - **Custom prompts** - Focus reviews on specific areas (e.g., security, error handling).
-- **Automatic skip** - Repos with no changes are skipped automatically.
+- **Automatic skip** - Repos with no changes are skipped automatically (code review only).
 - **Cross-platform** - Works on Linux, macOS (Bash), and Windows (PowerShell).
 
 ## Prerequisites
@@ -100,6 +102,8 @@ codex-review -Help
 
 ## Usage
 
+### Code Review (default)
+
 ```bash
 # Review uncommitted changes in the current repo
 codex-review
@@ -120,52 +124,49 @@ codex-review -m commit -c abc123
 codex-review --model o4-mini "Check for security issues"
 ```
 
+### Plan Review
+
+```bash
+# Review a plan file against the codebase
+codex-review -a plan -f plan.md
+
+# Review an inline plan description
+codex-review -a plan "Add JWT authentication with refresh tokens using middleware"
+
+# Plan file with additional focus instructions
+codex-review -a plan -f bugfix-plan.md "Focus on thread safety"
+
+# Review a plan across multiple repos
+codex-review -a plan -f migration-plan.md -d ~/projects
+```
+
 ## Setting Up with Claude Code
 
-To make Claude Code automatically use CodexConnector after every feature or bug fix, add a `CLAUDE.md` file to your project root.
+To make Claude Code automatically use CodexConnector for code reviews and plan reviews, add a `CLAUDE.md` file to your project root.
 
 ### Example CLAUDE.md
 
 Copy this into the `CLAUDE.md` at the root of any project where you want automatic Codex reviews:
 
 ```markdown
-# Code Review Workflow
+# CodexConnector Workflow
 
-After completing any code changes (features, bug fixes, refactors), you MUST run the Codex review process:
+## Code Review
+After completing any code changes, run the Codex review process:
+1. Run: `codex-review "Review my changes for bugs and edge cases"`
+2. Fix high/medium priority issues identified by Codex
+3. Re-run until no significant issues remain
 
-## Process
-
-1. **Run the review** after making changes:
-   ```bash
-   codex-review "Review the changes I just made for bugs, edge cases, and improvements"
-   ```
-
-2. **Analyze the feedback** from Codex and identify:
-   - High priority issues (bugs, crashes, security issues)
-   - Medium priority issues (edge cases, error handling)
-   - Low priority issues (style, naming, best practices)
-
-3. **Fix the issues** starting with high priority, then medium, then low.
-
-4. **Re-run the review** after fixes:
-   ```bash
-   codex-review "Verify the fixes address the previous issues"
-   ```
-
-5. **Repeat steps 2-4** until Codex reports no significant issues remaining.
-
-## When to Stop
-
-The review loop is complete when:
-- No High or Medium priority issues remain
-- Codex confirms the code is satisfactory
-- Only optional/stylistic suggestions remain (which can be noted but not necessarily fixed)
+## Plan Review
+Before implementing a bug fix or new module, get feedback on your plan:
+1. Run: `codex-review -a plan -f plan.md` or `codex-review -a plan "description of approach"`
+2. Refine the plan based on Codex feedback
+3. Implement once the plan is confirmed solid
+4. Run a code review after implementation
 
 ## Notes
-
 - Always use read-only mode for reviews (the script handles this)
 - If Codex suggests changes you disagree with, explain the reasoning to the user before skipping
-- For large changes, you may run targeted reviews: `codex-review "Focus only on the authentication changes"`
 ```
 
 ### Multi-Repo Setup
@@ -180,10 +181,17 @@ The script will automatically find all git repos in immediate subdirectories, ch
 
 ## How It Works
 
+### Code Review (`-a review`, default)
 1. **Discovery** - Scans the target directory and its immediate subdirectories for git repositories
 2. **Filter** - Skips repos with no relevant changes (no uncommitted files, commit not found, etc.)
 3. **Review** - For each repo with changes, runs `codex review` (or `codex exec` with a custom prompt in read-only sandbox mode)
 4. **Report** - Outputs review findings per repo and a final summary
+
+### Plan Review (`-a plan`)
+1. **Discovery** - Scans the target directory and its immediate subdirectories for git repositories
+2. **Load plan** - Reads the plan file and/or inline prompt
+3. **Review** - For each repo, runs `codex exec` in read-only mode with the plan, asking Codex to evaluate feasibility, potential issues, missing considerations, and affected code areas
+4. **Report** - Outputs plan review findings per repo and a final summary
 
 ## License
 
