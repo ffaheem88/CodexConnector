@@ -23,6 +23,7 @@ After completing any code changes (features, bug fixes, refactors), you MUST run
    ```
 
 2. **Analyze the feedback** from Codex and identify:
+   - Critical priority issues (RCE, SQL injection, data loss)
    - High priority issues (bugs, crashes, security issues)
    - Medium priority issues (edge cases, error handling)
    - Low priority issues (style, naming, best practices)
@@ -42,6 +43,53 @@ The review loop is complete when:
 - No High or Medium priority issues remain
 - Codex confirms the code is satisfactory
 - Only optional/stylistic suggestions remain (which can be noted but not necessarily fixed)
+
+<!-- PRIORITY-BASED REVIEW RULES (uncomment to activate)
+
+### Priority-Based Fix Rules
+
+| Priority | Description | Examples |
+|----------|-------------|---------|
+| Critical | Security holes, data loss, RCE | eval(), SQL injection, path traversal |
+| High     | Bugs, resource leaks, crashes | unclosed files, unhandled exceptions |
+| Medium   | Missing validation, edge cases | KeyError, missing error handling |
+| Low      | Style, naming, hypothetical | naming conventions, minor refactors |
+
+### Review Round Limits (max 3 rounds)
+
+**Round 1:** Codex reviews → Claude fixes Critical + High + Medium (skip Low)
+**Round 2:** Codex re-reviews → Claude fixes remaining Critical + High only
+**Round 3:** Codex final check → Claude fixes Critical only
+**After Round 3:** If Critical issues still exist → ASK THE HUMAN to decide whether to continue or accept
+
+Low priority issues are NEVER fixed during the review cycle.
+
+### When to Run Reviews (Production Guidelines)
+
+**ALWAYS review:**
+- Payment/invoice/financial logic (money involved)
+- Auth/permissions changes (security)
+- Database schema changes / migrations (irreversible)
+- Customer data handling (privacy)
+- New API endpoints (affects other systems)
+- New features with complex business logic
+
+**SKIP review for:**
+- Simple bug fixes (1-5 lines, obvious fix)
+- UI/CSS styling changes
+- Typo fixes, config changes
+- Documentation updates
+- Dependency version bumps
+- Adding static fields to forms
+- Report formatting changes
+
+### Plan Review Limits
+
+- Max 2 rounds for plan review
+- After Round 2, proceed to implementation regardless
+- Use plan review BEFORE coding for big features (saves more time than code review)
+
+END PRIORITY-BASED REVIEW RULES -->
 
 ---
 
