@@ -1,6 +1,7 @@
 # CodexConnector - Bridge between Claude Code and Codex CLI
 # Usage: codex-review.ps1 [OPTIONS] [CUSTOM_PROMPT]
 
+[CmdletBinding(PositionalBinding=$false)]
 param(
     [Alias("a")]
     [ValidateSet("review", "plan")]
@@ -25,7 +26,7 @@ param(
     [string]$Model,
 
     [Alias("v")]
-    [switch]$Verbose,
+    [switch]$VerboseOutput,
 
     [Alias("h")]
     [switch]$Help,
@@ -258,7 +259,7 @@ foreach ($repo in $Repos) {
             Write-Color "Consider trimming the plan file or splitting into smaller sections." "Yellow"
         }
 
-        if ($Verbose) {
+        if ($VerboseOutput) {
             Write-Host "Command: " -ForegroundColor Yellow -NoNewline
             Write-Host "codex exec $($execArgs -join ' ') <plan-prompt ($promptLen chars)>"
         }
@@ -320,7 +321,7 @@ foreach ($repo in $Repos) {
             "commit" { $codexArgs += "--commit", $Commit }
         }
 
-        if ($Verbose) {
+        if ($VerboseOutput) {
             Write-Host "Command: " -ForegroundColor Yellow -NoNewline
             Write-Host "codex review $($codexArgs -join ' ') $CustomPrompt"
         }
