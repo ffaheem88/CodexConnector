@@ -291,20 +291,25 @@ ${CUSTOM_PROMPT}
 
 Explore the codebase to ground your feedback in the actual code. Don't make any changes, just report your findings."
 
-        # Warn if prompt is very large (risk of hitting OS argument length limits)
-        PROMPT_LEN=${#PLAN_PROMPT}
-        if [[ $PROMPT_LEN -gt 30000 ]]; then
-            echo -e "${YELLOW}Warning: Plan prompt is very large (${PROMPT_LEN} chars). This may exceed OS command-line limits.${NC}"
-            echo -e "${YELLOW}Consider trimming the plan file or splitting into smaller sections.${NC}"
-        fi
-
         if [[ "$VERBOSE" == true ]]; then
-            echo -e "${YELLOW}Command:${NC} codex exec ${EXEC_ARGS[*]} <plan-prompt (${PROMPT_LEN} chars)>"
+            echo -e "${YELLOW}Command:${NC} codex exec ${EXEC_ARGS[*]} - (prompt via stdin, ${#PLAN_PROMPT} chars)"
         fi
 
         echo -e "\n${GREEN}Codex Plan Review Output:${NC}\n"
 
-        (cd "$repo" && codex exec "${EXEC_ARGS[@]}" "$PLAN_PROMPT") || REPO_EXIT=$?
+        RESULT_FILE=$(mktemp)
+        ERROR_FILE=$(mktemp)
+        trap 'rm -f "$RESULT_FILE" "$ERROR_FILE"' EXIT
+        echo -e "${YELLOW}Running Codex...${NC}"
+        (cd "$repo" && printf '%s' "$PLAN_PROMPT" | codex exec "${EXEC_ARGS[@]}" -o "$RESULT_FILE" - > /dev/null 2>"$ERROR_FILE") || REPO_EXIT=$?
+        if [[ $REPO_EXIT -eq 0 && -s "$RESULT_FILE" ]]; then
+            cat "$RESULT_FILE"
+        elif [[ $REPO_EXIT -eq 0 ]]; then
+            echo -e "${YELLOW}Warning: Codex returned no output.${NC}"
+        else
+            cat "$ERROR_FILE" >&2
+        fi
+        rm -f "$RESULT_FILE" "$ERROR_FILE"
 
     else
         # Code review: existing behavior
@@ -385,12 +390,19 @@ Explore the codebase to ground your feedback in the actual code. Don't make any 
 
 ${GIT_INSTRUCTIONS} Provide a detailed code review with findings about bugs, issues, and suggested improvements. Don't make any changes, just report your findings."
 
-            PROMPT_LEN=${#REVIEW_PROMPT}
-            if [[ $PROMPT_LEN -gt 30000 ]]; then
-                echo -e "${YELLOW}Warning: Review prompt is very large (${PROMPT_LEN} chars). This may exceed OS command-line limits.${NC}"
+            RESULT_FILE=$(mktemp)
+            ERROR_FILE=$(mktemp)
+            trap 'rm -f "$RESULT_FILE" "$ERROR_FILE"' EXIT
+            echo -e "${YELLOW}Running Codex...${NC}"
+            (cd "$repo" && printf '%s' "$REVIEW_PROMPT" | codex exec "${EXEC_ARGS[@]}" -o "$RESULT_FILE" - > /dev/null 2>"$ERROR_FILE") || REPO_EXIT=$?
+            if [[ $REPO_EXIT -eq 0 && -s "$RESULT_FILE" ]]; then
+                cat "$RESULT_FILE"
+            elif [[ $REPO_EXIT -eq 0 ]]; then
+                echo -e "${YELLOW}Warning: Codex returned no output.${NC}"
+            else
+                cat "$ERROR_FILE" >&2
             fi
-
-            (cd "$repo" && codex exec "${EXEC_ARGS[@]}" "$REVIEW_PROMPT") || REPO_EXIT=$?
+            rm -f "$RESULT_FILE" "$ERROR_FILE"
         else
             (cd "$repo" && codex review "${CODEX_ARGS[@]}") || REPO_EXIT=$?
         fi
