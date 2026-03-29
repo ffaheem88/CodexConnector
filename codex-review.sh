@@ -298,13 +298,18 @@ Explore the codebase to ground your feedback in the actual code. Don't make any 
         echo -e "\n${GREEN}Codex Plan Review Output:${NC}\n"
 
         RESULT_FILE=$(mktemp)
-        trap 'rm -f "$RESULT_FILE"' EXIT
+        ERROR_FILE=$(mktemp)
+        trap 'rm -f "$RESULT_FILE" "$ERROR_FILE"' EXIT
         echo -e "${YELLOW}Running Codex...${NC}"
-        (cd "$repo" && printf '%s' "$PLAN_PROMPT" | codex exec "${EXEC_ARGS[@]}" -o "$RESULT_FILE" - > /dev/null 2>&1) || REPO_EXIT=$?
+        (cd "$repo" && printf '%s' "$PLAN_PROMPT" | codex exec "${EXEC_ARGS[@]}" -o "$RESULT_FILE" - > /dev/null 2>"$ERROR_FILE") || REPO_EXIT=$?
         if [[ $REPO_EXIT -eq 0 && -s "$RESULT_FILE" ]]; then
             cat "$RESULT_FILE"
+        elif [[ $REPO_EXIT -eq 0 ]]; then
+            echo -e "${YELLOW}Warning: Codex returned no output.${NC}"
+        else
+            cat "$ERROR_FILE" >&2
         fi
-        rm -f "$RESULT_FILE"
+        rm -f "$RESULT_FILE" "$ERROR_FILE"
 
     else
         # Code review: existing behavior
@@ -386,13 +391,18 @@ Explore the codebase to ground your feedback in the actual code. Don't make any 
 ${GIT_INSTRUCTIONS} Provide a detailed code review with findings about bugs, issues, and suggested improvements. Don't make any changes, just report your findings."
 
             RESULT_FILE=$(mktemp)
-            trap 'rm -f "$RESULT_FILE"' EXIT
+            ERROR_FILE=$(mktemp)
+            trap 'rm -f "$RESULT_FILE" "$ERROR_FILE"' EXIT
             echo -e "${YELLOW}Running Codex...${NC}"
-            (cd "$repo" && printf '%s' "$REVIEW_PROMPT" | codex exec "${EXEC_ARGS[@]}" -o "$RESULT_FILE" - > /dev/null 2>&1) || REPO_EXIT=$?
+            (cd "$repo" && printf '%s' "$REVIEW_PROMPT" | codex exec "${EXEC_ARGS[@]}" -o "$RESULT_FILE" - > /dev/null 2>"$ERROR_FILE") || REPO_EXIT=$?
             if [[ $REPO_EXIT -eq 0 && -s "$RESULT_FILE" ]]; then
                 cat "$RESULT_FILE"
+            elif [[ $REPO_EXIT -eq 0 ]]; then
+                echo -e "${YELLOW}Warning: Codex returned no output.${NC}"
+            else
+                cat "$ERROR_FILE" >&2
             fi
-            rm -f "$RESULT_FILE"
+            rm -f "$RESULT_FILE" "$ERROR_FILE"
         else
             (cd "$repo" && codex review "${CODEX_ARGS[@]}") || REPO_EXIT=$?
         fi
