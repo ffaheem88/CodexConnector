@@ -29,9 +29,9 @@ After completing any code changes (features, bug fixes, refactors), you MUST run
 
 3. **Fix the issues** starting with high priority, then medium, then low.
 
-4. **Re-run the review** after fixes:
+4. **Re-run the review** after fixes — each call is a fresh session with no memory of previous runs, so prompts must be self-contained:
    ```bash
-   codex-review "Verify the fixes address the previous issues"
+   codex-review "Review these uncommitted changes for correctness — focus on <specific area you changed>"
    ```
 
 5. **Repeat steps 2-4** until Codex reports no significant issues remaining.
@@ -77,9 +77,9 @@ Before implementing a bug fix or a new module, you SHOULD run the Codex plan rev
    - Suggested improvements to the approach
    - Which existing files/modules will need changes
 
-3. **Refine the plan** based on feedback, then optionally re-run:
+3. **Refine the plan** based on feedback, then optionally re-run — each call is stateless, so describe what the plan does, not what changed:
    ```bash
-   codex-review -a plan -f plan-v2.md "Verify the updated plan addresses previous concerns"
+   codex-review -a plan -f plan-v2.md "Review this plan for correctness — focus on <specific concern>"
    ```
 
 4. **Proceed to implementation** once Codex confirms the plan is solid.
@@ -127,7 +127,8 @@ codex-review "Check for bugs and edge cases"
 # Codex finds: ZeroDivisionError on empty input
 # Fix the issue
 
-codex-review "Verify the empty input fix is correct"
+# Each call is stateless — describe what to check, not what changed
+codex-review "Check the empty input handling in <function> for correctness"
 
 # Codex confirms fix, no more issues
 # Done!
@@ -141,7 +142,8 @@ codex-review -a plan -f auth-plan.md
 # Codex feedback: plan doesn't handle token refresh, suggests middleware pattern
 # Update the plan
 
-codex-review -a plan -f auth-plan-v2.md "Verify token refresh is handled"
+# Each call is stateless — describe the plan, not what was updated
+codex-review -a plan -f auth-plan-v2.md "Focus on token refresh handling"
 
 # Codex confirms plan is solid
 # Now implement it
@@ -152,6 +154,7 @@ codex-review "Review the new auth module implementation"
 
 ## Notes
 
+- **Stateless sessions**: every `codex-review` call starts a fresh Codex session with no memory of previous runs. Always write self-contained prompts that describe what to check — never reference "the previous review" or "the fix from last time"
 - Always use read-only mode for reviews (the script handles this)
 - **Timeout**: Codex reviews are slow. Set a minimum 10-minute timeout when invoking `codex-review` from a tool or subprocess. For large diffs, multi-repo reviews, or lengthy plan files, increase to 15–20 minutes.
 - If Codex suggests changes you disagree with, explain the reasoning to the user before skipping
